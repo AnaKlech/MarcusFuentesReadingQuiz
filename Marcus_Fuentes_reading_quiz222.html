@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marcus Fuentes — Reading Practice</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #f5f4f0; font-family: 'Segoe UI', Arial, sans-serif; min-height: 100vh; }
+
+.header {
+  background: #fff; border-bottom: 2px solid #e5e3dd;
+  padding: 12px 24px; display: flex; align-items: center; gap: 14px;
+  position: sticky; top: 0; z-index: 100;
+}
+.avatar {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: #534AB7; color: #fff;
+  font-weight: 700; font-size: 14px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.header-text h2 { font-size: 14px; font-weight: 700; color: #1a1a2e; }
+.header-text p  { font-size: 11px; color: #888; }
+.progress-wrap  { flex: 1; margin-left: 16px; }
+.progress-label { display: flex; justify-content: space-between; font-size: 11px; color: #888; margin-bottom: 4px; }
+.progress-bar-bg   { height: 6px; background: #e0defa; border-radius: 99px; overflow: hidden; }
+.progress-bar-fill { height: 100%; background: #534AB7; border-radius: 99px; transition: width .4s; }
+
+.page { max-width: 1120px; margin: 0 auto; padding: 20px 16px 60px; }
+
+/* Two-column */
+.quiz-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  align-items: start;
+}
+@media (max-width: 680px) { .quiz-cols { grid-template-columns: 1fr; } }
+
+/* Left: passage */
+.passage-col {
+  position: sticky;
+  top: 68px;
+  max-height: calc(100vh - 84px);
+  overflow-y: auto;
+  padding-right: 2px;
+}
+.passage-col::-webkit-scrollbar { width: 4px; }
+.passage-col::-webkit-scrollbar-thumb { background: #c5c3e8; border-radius: 99px; }
+
+.passage-card {
+  background: #fff; border-radius: 12px;
+  padding: 20px 22px; margin-bottom: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.07);
+}
+.passage-card:last-child { margin-bottom: 0; }
+.passage-title {
+  font-size: 10px; font-weight: 700; letter-spacing: .09em;
+  text-transform: uppercase; color: #aaa; margin-bottom: 10px;
+}
+.passage-body p {
+  font-size: 13.5px; line-height: 1.78; color: #333; margin-bottom: 6px;
+}
+.para-num { color: #ccc; font-size: 11px; margin-right: 5px; user-select: none; }
+.poem-lines { font-size: 13.5px; line-height: 2.0; color: #333; white-space: pre-line; }
+
+/* Right: question */
+.question-col { }
+.section-label {
+  font-size: 10px; font-weight: 800; letter-spacing: .1em;
+  text-transform: uppercase; color: #aaa; margin-bottom: 10px; padding-left: 2px;
+}
+.question-card {
+  background: #fff; border-radius: 12px;
+  padding: 22px 24px; box-shadow: 0 1px 4px rgba(0,0,0,.07);
+}
+.skill-badge {
+  display: inline-block; padding: 3px 11px; border-radius: 99px;
+  font-size: 10px; font-weight: 700; letter-spacing: .04em; margin-bottom: 10px;
+}
+.q-num  { font-size: 11px; color: #bbb; font-weight: 600; margin-bottom: 5px; }
+.q-text { font-size: 14.5px; font-weight: 700; color: #1a1a2e; margin-bottom: 13px; line-height: 1.5; white-space: pre-wrap; }
+
+.tip-box {
+  background: #E6F1FB; border-left: 4px solid #185FA5;
+  border-radius: 0 6px 6px 0; padding: 10px 13px; margin-bottom: 15px;
+}
+.tip-label { font-size: 9px; font-weight: 800; letter-spacing: .1em; color: #0C447C; text-transform: uppercase; margin-bottom: 4px; }
+.tip-text  { font-size: 12.5px; color: #0C447C; line-height: 1.5; }
+
+.options { display: flex; flex-direction: column; gap: 8px; }
+.opt-btn {
+  background: #fff; border: 2px solid #e0defa; border-radius: 10px;
+  padding: 10px 14px; text-align: left; cursor: pointer;
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 13.5px; color: #333; line-height: 1.45;
+  transition: border-color .12s, background .12s; width: 100%;
+}
+.opt-btn:hover:not(:disabled) { border-color: #534AB7; background: #f9f8ff; }
+.opt-btn.sel     { background: #EEEDFE; border-color: #534AB7; }
+.opt-btn.correct { background: #EAF3DE; border-color: #1D9E75; }
+.opt-btn.wrong   { background: #FCEBEB; border-color: #E24B4A; opacity: .48; cursor: not-allowed; }
+.opt-btn:disabled { cursor: not-allowed; }
+
+.lc {
+  min-width: 24px; height: 24px; border-radius: 50%;
+  border: 2px solid #c5c3e8; background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: #534AB7;
+  flex-shrink: 0; margin-top: 1px;
+}
+.opt-btn.sel     .lc { background: #534AB7; color: #fff; border-color: #534AB7; }
+.opt-btn.correct .lc { background: #1D9E75; color: #fff; border-color: #1D9E75; }
+.opt-btn.wrong   .lc { background: #E24B4A; color: #fff; border-color: #E24B4A; }
+
+.fb-wrong {
+  margin-top: 12px; background: #FCEBEB; border: 1px solid #E24B4A;
+  border-radius: 8px; padding: 11px 14px;
+  font-size: 13px; color: #7a1c1c; line-height: 1.55;
+}
+.fb-correct {
+  margin-top: 12px; background: #EAF3DE; border: 1px solid #1D9E75;
+  border-radius: 8px; padding: 11px 14px;
+  font-size: 13px; color: #1a5c3a; line-height: 1.55;
+}
+.fb-title { font-weight: 700; margin-bottom: 4px; }
+
+.btn-row { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
+.btn-back {
+  background: none; border: 2px solid #d0ceea; border-radius: 8px;
+  padding: 8px 16px; font-size: 13px; font-weight: 600;
+  cursor: pointer; color: #534AB7;
+}
+.btn-back:hover { border-color: #534AB7; }
+.btn-back-hidden { visibility: hidden; }
+.btn-submit {
+  background: #534AB7; color: #fff; border: none;
+  border-radius: 8px; padding: 10px 22px;
+  font-size: 13.5px; font-weight: 700; cursor: pointer;
+}
+.btn-submit:disabled { background: #c5c3e8; cursor: not-allowed; }
+.btn-submit:hover:not(:disabled) { background: #3e34a3; }
+.btn-next {
+  background: #534AB7; color: #fff; border: none;
+  border-radius: 8px; padding: 10px 22px;
+  font-size: 13.5px; font-weight: 700; cursor: pointer;
+}
+.btn-next:hover { background: #3e34a3; }
+
+/* Results */
+.results-wrap { max-width: 560px; margin: 0 auto; padding: 40px 16px; text-align: center; }
+.score-ring-wrap { position: relative; width: 130px; height: 130px; margin: 0 auto 18px; }
+.score-ring-wrap svg { transform: rotate(-90deg); }
+.score-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); }
+.score-pct { font-size: 28px; font-weight: 800; color: #534AB7; }
+.score-lbl { font-size: 10px; color: #888; font-weight: 600; }
+.results-title { font-size: 20px; font-weight: 800; color: #1a1a2e; margin-bottom: 5px; }
+.results-sub   { font-size: 14px; color: #666; margin-bottom: 22px; }
+.skill-table   { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.07); margin-bottom: 22px; text-align: left; }
+.skill-row { display: flex; align-items: center; justify-content: space-between; padding: 11px 18px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+.skill-row:last-child { border-bottom: none; }
+.skill-name { color: #333; font-weight: 600; }
+.sk-pass { font-weight: 700; color: #1D9E75; }
+.sk-fail { font-weight: 700; color: #E24B4A; }
+.btn-restart { background: #534AB7; color: #fff; border: none; border-radius: 8px; padding: 12px 28px; font-size: 14px; font-weight: 700; cursor: pointer; }
+.btn-restart:hover { background: #3e34a3; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="avatar">MF</div>
+  <div class="header-text">
+    <h2>Marcus Fuentes</h2>
+    <p>Reading Practice &nbsp;·&nbsp; Based on last 4 tests</p>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span id="prog-label">Question 1 of 10</span>
+      <span id="skill-label" style="color:#534AB7;font-weight:700;font-size:11px;"></span>
+    </div>
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-fill" style="width:0%"></div></div>
+  </div>
+</div>
+
+<div class="page" id="app"></div>
+
+<script>
+var PASS_INFO = {
+  title: 'From "Voices of the Reef" (informational article)',
+  paras: [
+    {n:'1',t:'Deep beneath the ocean surface, coral reefs quietly support a remarkable variety of life. Scientists who study these ecosystems have long observed that healthy reefs are noisy places. The clicks, pops, and snaps of shrimp, fish, and other animals fill the water like a busy city street. But in recent decades, researchers have noticed that many reefs have grown eerily silent.'},
+    {n:'2',t:'What is causing this quiet? The answer lies in a process called coral bleaching. When ocean temperatures rise too much, the tiny algae living inside coral tissue — algae that give reefs their vivid color — get expelled. Without this algae, coral turns ghostly white. Cut off from its primary food supply, the coral eventually starves and dies, taking the sound and life of the reef with it.'},
+    {n:'3',t:'To understand how quickly bleaching spreads, researchers compared two sets of reefs: those in warming regions with those in cooler, protected marine reserves. The protected reefs had remained colorful and dense, while the exposed reefs had turned pale and sparse. This comparison gave scientists clear evidence that water temperature was the driving factor.'},
+    {n:'4',t:'Fortunately, there is hope. In Australia, a team began broadcasting recordings of healthy reef sounds through underwater speakers near damaged reefs. Juvenile fish — who use sound to navigate toward suitable habitats — were drawn in at twice the normal rate. Within months, the recovering areas showed real improvements in biodiversity.'},
+    {n:'5',t:"The work of reef restoration is slow, but the results suggest a promising path. Every reef that recovers represents not just an ecosystem saved, but a lesson learned: the ocean's own voices may help guide its healing."}
+  ]
+};
+
+var PASS_LIT = {
+  title: 'From "The Long Way Around" (short story)',
+  paras: [
+    {n:'1',t:'Every afternoon, Maya took the shortcut home through Clover Park. She had done it a thousand times. But today the park gate was chained shut, and a sign read: Closed for Restoration. She stood for a moment, then turned and headed down Birch Street instead.'},
+    {n:'2',t:'The long way around was exactly that. She passed the dry-cleaning shop with the steamy windows, the bakery that filled the block with the scent of warm bread, and a tiny garden plot someone had tucked between two buildings. Maya slowed at the garden. Whoever had planted it had layered flowers like a quilt — tall sunflowers at the back, then zinnias, then a border of marigolds small enough to touch the sidewalk.'},
+    {n:'3',t:'"You\'re looking at my project," said a voice. An elderly woman with soil on her knees was crouching between the rows. "I\'ve been working on it since March."'},
+    {n:'4',t:'"It\'s amazing," Maya said honestly.'},
+    {n:'5',t:'The woman smiled. "Most people pass by too fast to notice." She held up a seed packet. "Marigolds. The trick is planting them as a border — they keep pests away from everything else. They protect the whole garden without anyone asking them to."'},
+    {n:'6',t:'Maya looked at the row of small orange flowers and thought of her younger brother, Dario. All week he had been trailing after her, asking to carry her bag, offering to help with her homework, knocking on her door to see if she needed anything. Each time, Maya had told him she was fine, that she didn\'t need help, and sent him away. He had never complained. He just kept showing up.'},
+    {n:'7',t:'She thanked the woman and continued down Birch Street. The walk home was longer, but she did not mind. When she opened the front door, Dario was sitting on the steps.'},
+    {n:'8',t:'"Can I carry your bag?" he asked.'},
+    {n:'9',t:'For the first time that week, Maya did not hesitate. "Yes," she said. "Thanks." She handed it over, and the two of them went inside together.'}
+  ]
+};
+
+var PASS_POEM = {
+  title: 'From "March Window" (poem)',
+  lines: [
+    'The sky opens gray and wide,',
+    'and I press my hand against the glass',
+    'as if I could push through to the other side',
+    'where the wind has turned the trees to dancers.',
+    '',
+    'A single sparrow lands,',
+    'bends a twig like a question mark,',
+    'then launches off \u2014 a dart of dark \u2014',
+    'into the rolling, endless green.',
+    '',
+    'I pull my hand away.',
+    'The glass holds my warmth for a moment,',
+    'then lets it go.',
+    '',
+    'Outside, the first bud opens',
+    'slow as a secret,',
+    'and I am already leaning toward the door.'
+  ]
+};
+
+var QS = [
+  {skill:'Text Structure',sc:'#633806',sb:'#FAEEDA',pass:'INFO',
+   q:'How does the author organize paragraph 3 of "Voices of the Reef"?',
+   tip:'Read paragraph 3 carefully and look for signal words that show how ideas are connected. Ask yourself: is the author listing steps in order, showing causes and effects, pointing out similarities and differences, or ranking ideas by importance?',
+   opts:['By using order of importance','By using chronological order','By using compare and contrast','By using cause and effect'],
+   ans:2,
+   wrongs:['Order of importance means the author ranks ideas from most to least significant. Paragraph 3 does not rank the two reef types — it places them side by side to show a difference. Try again.','Chronological order arranges events by time. Paragraph 3 does not follow a sequence of events over time. It describes two reef types at the same moment to highlight a contrast. Try again.',null,'Cause and effect means one event triggers another. While temperature is mentioned, paragraph 3 is structured to place two reef types side by side and contrast them — not to show a chain of causes. Try again.'],
+   exp:'Paragraph 3 places two sets of reefs side by side — protected reefs (colorful, dense) versus exposed reefs (pale, sparse) — to highlight the contrast between them. This side-by-side structure is compare and contrast. The comparison serves as scientific evidence for the role of water temperature.',
+   mapTo:'Q4',teks:'TEKS 5.9.D.i',reshape:'Same skill, same question format'},
+
+  {skill:'Figurative Language',sc:'#534AB7',sb:'#EEEDFE',pass:'INFO',
+   q:'In paragraph 1 of "Voices of the Reef," the author compares reef sounds to "a busy city street." What does this figurative comparison help the reader understand?',
+   tip:'Focus only on the words inside the figurative comparison itself — not on facts from the rest of the article. Ask: what quality of "a busy city street" is the author transferring onto the reef? Let the comparison, not the surrounding paragraphs, give you your answer.',
+   opts:['That reefs are located in places where many ships travel','That healthy reefs are full of constant, active sound and life','That city pollution is the main cause of damage to coral reefs','That scientists must travel to cities to study reef recordings'],
+   ans:1,
+   wrongs:['This option uses "city" to import an idea about ships, but the comparison is specifically about sound — the clicks and snaps filling the water. Think about what a busy city street sounds like. Try again.',null,'City pollution is not what a "busy city street" comparison conveys. The comparison is about noise and activity level, not about what causes reef damage. Try again.','Nothing in the comparison suggests scientists traveling anywhere. Focus on the quality of a busy city street — its constant noise and activity — and what that says about the reef. Try again.'],
+   exp:'A busy city street is loud, constantly active, and full of varied sounds from many sources. The author uses this comparison to show that a healthy reef is similarly alive with sound — clicks, pops, and snaps from many animals. The figurative comparison helps the reader picture the reef\'s energy and liveliness.',
+   mapTo:'Q6',teks:'TEKS 5.10.D',reshape:'Same skill, different surface'},
+
+  {skill:'Inference & Evidence',sc:'#D85A30',sb:'#FAECE7',pass:'INFO',
+   q:'Based on paragraph 4 of "Voices of the Reef," what can the reader conclude about juvenile fish?',
+   tip:'Go back to paragraph 4 and read it closely. The conclusion you draw must follow directly from the specific details in that paragraph — not from general knowledge about fish. Ask: what do the details in paragraph 4 specifically prove about how juvenile fish behave?',
+   opts:['They prefer to live near underwater speakers rather than natural reefs','They rely on sound as a signal when searching for a place to live','They can only survive in reefs that have not been damaged by bleaching','They were trained by researchers to recognize healthy reef recordings'],
+   ans:1,
+   wrongs:['The fish were drawn to the recovering reef area, not to the speakers themselves. The speakers were broadcasting reef sounds — the fish were responding to the sound, not to the device. Try again.',null,'Paragraph 4 does not say fish can only survive in undamaged reefs. It says they navigated toward recovering areas when reef sounds were played. This is about navigation behavior, not survival limits. Try again.','The word "trained" implies deliberate teaching. Paragraph 4 shows a natural response — fish use sound to navigate toward habitats on their own. No training by researchers is described. Try again.'],
+   exp:'Paragraph 4 states that juvenile fish "use sound to navigate toward suitable habitats" and that they arrived at twice the normal rate when reef sounds were broadcast. The logical conclusion is that sound is a natural signal fish use when choosing where to settle.',
+   mapTo:'Q3',teks:'TEKS 5.6.F',reshape:'Same skill, different surface'},
+
+  {skill:'Central Idea',sc:'#185FA5',sb:'#E6F1FB',pass:'INFO',
+   q:'What is the central idea of "Voices of the Reef"?',
+   tip:'The central idea is the main point the author wants you to understand after reading the entire article — not just one paragraph. Ask: what idea is supported by every paragraph from beginning to end? An idea mentioned in only one section is a supporting detail, not the central idea.',
+   opts:['Coral bleaching turns reefs ghostly white by forcing algae out of coral tissue.','Scientists in Australia discovered that underwater speakers attract juvenile fish to damaged reefs.','Coral reefs are being damaged by rising ocean temperatures, but sound-based restoration offers a way to help them recover.','Protected marine reserves stay healthier than reefs that are exposed to warming ocean water.'],
+   ans:2,
+   wrongs:['This is an accurate detail from paragraph 2, but it covers only one part of the article — the explanation of how bleaching works. The central idea must be supported by all five paragraphs, including the solution. Try again.','This is a supporting detail from paragraph 4. It describes one specific finding, but the article also explains bleaching, compares reef types, and draws a broader conclusion. A central idea covers the whole article. Try again.',null,'This is a true detail from paragraph 3, but it describes only one piece of evidence. The central idea must include both the problem (bleaching caused by warming water) and the hopeful finding (restoration through sound). Try again.'],
+   exp:'Every paragraph in the article builds toward one main point: coral reefs are suffering because of warming ocean temperatures, but researchers have found that broadcasting reef sounds can help damaged reefs recover. Paragraph 2 explains the problem, paragraph 3 provides evidence, paragraph 4 describes the solution, and paragraph 5 draws the conclusion. Option C captures the full arc of the article.',
+   mapTo:'Q7',teks:'TEKS 5.6.E',reshape:'Same skill, different surface'},
+
+  {skill:'Text Structure',sc:'#633806',sb:'#FAEEDA',pass:'INFO',
+   q:'In paragraph 4 of "Voices of the Reef," why does the author describe events in chronological order?',
+   tip:'Identify what happens first, second, and third in paragraph 4. Then ask: what does following this sequence of events help the reader understand that a different order would not? Think about what the whole progression shows — not just any single step.',
+   opts:['To help the reader follow how the sound restoration method developed over time and led to real results','To describe which types of fish arrived at the reef before and after the experiment','To compare the Australian reef project to other restoration programs around the world','To explain why scientists chose Australia as the location for their research'],
+   ans:0,
+   wrongs:[null,'Paragraph 4 does not compare different types of fish or describe a before-and-after fish count. It follows the steps of a single process to show that the method worked. Try again.','No other world programs are mentioned in paragraph 4. The chronological order traces the steps and outcome of one project, not a comparison between projects. Try again.','Paragraph 4 does not explain why Australia was chosen. Its time-ordered structure traces what happened — broadcast sounds, fish arrived, biodiversity improved — to show the method produced real results. Try again.'],
+   exp:'Paragraph 4 follows a clear sequence: researchers broadcast reef sounds → juvenile fish arrived at twice the normal rate → within months, biodiversity improved. This chronological order lets the reader trace the cause-and-effect chain from action to outcome, showing that the restoration method actually worked.',
+   mapTo:'Q1',teks:'TEKS 5.9.D.i',reshape:'Same skill, different text section'},
+
+  {skill:'Figurative Language',sc:'#534AB7',sb:'#EEEDFE',pass:'POEM',
+   q:'Which lines from "March Window" use figurative language to build a sense of longing and quiet happiness?',
+   tip:'Find the option that actually uses figurative language — words that mean something beyond their literal definition. Then ask: do those figurative words create a feeling of longing or happiness, or some other emotion? Analyze the figurative words themselves, not just what is happening in the scene.',
+   opts:['The sky opens gray and wide, / and I press my hand against the glass (lines 1\u20132)','A single sparrow lands, / bends a twig like a question mark (lines 5\u20136)','I pull my hand away. / The glass holds my warmth for a moment (lines 9\u201310)','Outside, the first bud opens / slow as a secret (lines 13\u201314)'],
+   ans:3,
+   wrongs:['Lines 1\u20132 describe a physical action — pressing a hand to glass. There is no figurative comparison that builds a feeling of happiness here. The gray sky and pressed hand suggest longing for the outside, but no figurative language creates a positive emotional lift. Try again.','"Like a question mark" is a simile, but it creates a sense of uncertainty or curiosity, not happiness. Think about whether the feeling this line creates is truly a happy, positive one. Try again.','Lines 9\u201310 describe warmth fading — "holds my warmth for a moment, then lets it go." This creates a feeling of loss or passing, not happiness. Look for the figurative language that pulls the reader in a positive emotional direction. Try again.',null],
+   exp:'"Slow as a secret" is a simile comparing a bud opening to the hushed, personal way a secret is shared — creating a feeling of wonder and quiet joy. The very next line shows the speaker leaning toward the door, confirming the pull toward happiness. This is the only option where the figurative language itself builds both longing and a positive emotional lift.',
+   mapTo:'Q12',teks:'TEKS 5.10.D',reshape:'Same skill, different text type'},
+
+  {skill:'Plot & Resolution',sc:'#993556',sb:'#FBEAF0',pass:'LIT',
+   q:'Paragraph 6 explains that all week Maya had been turning Dario away each time he offered to help. At the end of the story, Maya accepts his offer for the first time. What does this change in Maya\'s behavior most likely show?',
+   tip:'Look at what causes Maya\'s change — what did she see and hear on Birch Street, and what connection did she make? The resolution of a story often lies in what shifts inside a character, not just what happens around them.',
+   opts:['Maya decides to take the long route home every day so she can visit the garden again','Maya realizes she has been too quick to reject Dario\'s help and begins to appreciate his quiet loyalty','Maya understands that Dario has been upset with her all week and wants to make it up to him','Maya learns directly from the elderly woman that she should be kinder to her younger brother'],
+   ans:1,
+   wrongs:['The story does not suggest Maya plans to return to the garden. Her change is about her relationship with Dario, not about her walking route. Think about what internal shift the story shows when she finally says yes. Try again.',null,'The text says Dario never complained — he just kept showing up. There is no sign he was upset. Maya\'s realization is not about apologizing for hurting him, but about recognizing the value of his steady, quiet helpfulness. Try again.','The elderly woman talks about marigolds, not about siblings. She does not give Maya any direct advice. Maya makes the connection to Dario on her own, in paragraph 6. Try again.'],
+   exp:'All week Maya had been turning Dario away, telling him she didn\'t need help each time he offered. When she sees the marigolds protecting the whole garden without being asked, she immediately thinks of Dario — who has been doing the same thing: quietly showing up, offering help, and never complaining when she sent him away. By accepting his help at the end, Maya shows she now recognizes and values that quiet, unasked-for loyalty.',
+   mapTo:'Q15',teks:'TEKS 5.7.C',reshape:'Same skill, different surface'},
+
+  {skill:'Cross-Text Comparison',sc:'#0F6E56',sb:'#E1F5EE',pass:'LITPOEM',
+   q:'Based on "The Long Way Around" and "March Window," how does the speaker\'s experience in the poem DIFFER from Maya\'s experience in the story?',
+   tip:'For each answer choice, check it against BOTH texts separately. One correct answer must be true for the poem AND clearly false for the story — or vice versa. If a statement could fit both texts, it cannot be the right answer.',
+   opts:['The speaker in the poem observes nature from indoors and has not yet stepped outside, while Maya goes outdoors and talks with another person','The speaker in the poem feels frustrated by being stuck inside, while Maya feels happy to be walking through the neighborhood','The speaker in the poem learns an important lesson about family, while Maya does not think about her own family during the story','The speaker in the poem spends time with a neighbor, while Maya is completely alone for the entire story'],
+   ans:0,
+   wrongs:[null,'Check this against the poem: the speaker does not show frustration — the tone is quiet and wondering, not frustrated. Also, Maya does not appear especially happy to be walking; she simply adapts to the detour. This option does not hold up in both texts. Try again.','This is reversed. It is Maya in the story who makes a realization about family (her brother Dario). The poem\'s speaker does not think about family at all. Try again.','Check both texts: in the story, Maya talks with the woman in the garden — she does not spend time alone. In the poem, the speaker is alone the entire time. This option gets both texts backwards. Try again.'],
+   exp:'In "March Window," the speaker watches everything through glass — sparrows, trees, a budding flower — and the poem ends with the speaker only leaning toward the door, still inside. In "The Long Way Around," Maya actively walks the neighborhood, stops and has a real conversation with the woman tending the garden, and interacts with Dario at home. Option A is the correct difference: the speaker remains indoors observing, while Maya is outside and engaged with people.',
+   mapTo:'Q17',teks:'TEKS 5.6.G',reshape:'Same skill, different surface'},
+
+  {skill:"Author's Voice",sc:'#993556',sb:'#FBEAF0',pass:'LIT',
+   q:'Read this sentence from paragraph 5 of "The Long Way Around."\n\n"They protect the whole garden without anyone asking them to."\n\nHow does this sentence contribute to the author\'s message in the story?',
+   tip:'Think about what this sentence is really saying beneath its literal meaning — and then ask why the author places it here, at this exact moment. What idea is the author building toward? Consider what happens in the very next paragraph.',
+   opts:['By showing that successful gardening requires careful planning over many months','By suggesting that quiet, unasked-for helpfulness has real value worth appreciating','By demonstrating that marigolds are a more practical choice than sunflowers or zinnias','By implying that the elderly woman would like Maya to return and help tend the garden'],
+   ans:1,
+   wrongs:['This option focuses on gardening as a skill, but the sentence is not about the effort of gardening — it is about a quality of protection that happens without being asked. Think about who else in the story offers help without being asked. Try again.',null,'The sentence is about what the marigolds do — protect without being asked — not about which flower is more practical. The author is not making a gardening comparison. Think about what parallel the author wants the reader to draw after this sentence. What does Maya think about in the very next paragraph? Try again.','The woman\'s wishes are not mentioned in the text. The sentence about marigolds is there to help Maya — and the reader — understand something about a different situation entirely. Try again.'],
+   exp:'The sentence about marigolds protecting the garden without being asked is a signal to the reader. In the very next paragraph, Maya immediately thinks of Dario — who has been quietly offering help all week without complaining when she turned him away. The author uses the marigold detail to carry the story\'s message: quiet, unasked-for helpfulness has real value, even when it goes unnoticed.',
+   mapTo:'Q6',teks:'TEKS 5.7.A',reshape:'Same skill, different surface'},
+
+  {skill:'Cross-Text Comparison',sc:'#0F6E56',sb:'#E1F5EE',pass:'LITPOEM',
+   q:'BOTH "The Long Way Around" and "March Window" convey the idea that —',
+   tip:'Choose an answer supported by evidence from BOTH texts. Before deciding, test your answer against each text separately. If an option fits one text perfectly but cannot be shown in the other, eliminate it.',
+   opts:['Spending time outdoors always changes a person\'s relationship with others','Slowing down and paying close attention can lead to something meaningful','Nature reminds people that time passes quickly and should not be wasted','Young people learn their most important lessons when their usual routine is interrupted'],
+   ans:1,
+   wrongs:['Check this against the poem: the speaker is still inside at the end and has not changed a relationship with another person. This option fits the story but does not hold up in the poem. Try again.',null,'Neither text presents a message about time passing quickly. The poem\'s speaker watches a bud open slowly; Maya takes a longer walk without minding. The emotional tone of both is discovery, not urgency about time. Try again.','Check this option carefully against the poem. The speaker is not described as young, and the speaker\'s routine is not interrupted — they are simply looking out a window. This option does not hold up in the poem. Try again.'],
+   exp:'In "The Long Way Around," Maya slows down at the garden, notices details she would never have seen on her usual shortcut, and arrives at a meaningful realization about Dario. In "March Window," the speaker carefully watches every detail — a sparrow bending a twig, a bud opening slowly — and that attentive watching leads to a sense of quiet wonder and a desire to step outside. Both texts reward slow, unhurried attention with genuine insight.',
+   mapTo:'Q16',teks:'TEKS 5.6.G',reshape:'Same skill, different surface'}
+];
+
+var cur=0, sel=null, submitted=false, STATE='quiz';
+var scores    = QS.map(function(){return null;});
+var triedPerQ = QS.map(function(){return [];});
+
+function buildPassageCol(key) {
+  var html = '<div class="passage-col">';
+  if (key==='INFO')    html += infoCard();
+  else if (key==='LIT')    html += litCard();
+  else if (key==='POEM')   html += poemCard();
+  else if (key==='LITPOEM') html += litCard() + poemCard();
+  html += '</div>';
+  return html;
+}
+
+function infoCard() {
+  var h='<div class="passage-card"><div class="passage-title">'+PASS_INFO.title+'</div><div class="passage-body">';
+  PASS_INFO.paras.forEach(function(p){h+='<p><span class="para-num">'+p.n+'</span>'+p.t+'</p>';});
+  return h+'</div></div>';
+}
+function litCard() {
+  var h='<div class="passage-card"><div class="passage-title">'+PASS_LIT.title+'</div><div class="passage-body">';
+  PASS_LIT.paras.forEach(function(p){h+='<p><span class="para-num">'+p.n+'</span>'+p.t+'</p>';});
+  return h+'</div></div>';
+}
+function poemCard() {
+  return '<div class="passage-card"><div class="passage-title">'+PASS_POEM.title+'</div>'
+    +'<div class="poem-lines">'+PASS_POEM.lines.map(function(l){return l===''?'\u00a0':l;}).join('\n')+'</div></div>';
+}
+
+function render() {
+  if (STATE==='results'){renderResults();return;}
+  var q=QS[cur], tried=triedPerQ[cur], L=['A','B','C','D'];
+
+  document.getElementById('prog-fill').style.width=Math.round((cur/QS.length)*100)+'%';
+  document.getElementById('prog-label').textContent='Question '+(cur+1)+' of '+QS.length;
+  document.getElementById('skill-label').textContent=q.skill;
+
+  var secLabel='';
+  if(cur===0) secLabel='<div class="section-label">Passage 1 \u2014 Informational</div>';
+  if(cur===5) secLabel='<div class="section-label">Passage 2 \u2014 Story &amp; Poem (Paired)</div>';
+
+  var opts='<div class="options">';
+  q.opts.forEach(function(o,i){
+    var cls='opt-btn', dis='';
+    if(!submitted){
+      if(sel===i) cls+=' sel';
+      if(tried.indexOf(i)!==-1){cls+=' wrong';dis=' disabled';}
+    } else {
+      if(i===q.ans) cls+=' correct';
+      else if(sel===i||tried.indexOf(i)!==-1) cls+=' wrong';
+      dis=' disabled';
+    }
+    opts+='<button class="'+cls+'" onclick="pick('+i+')"'+dis+'>'
+      +'<div class="lc">'+L[i]+'</div><span>'+o+'</span></button>';
+  });
+  opts+='</div>';
+
+  var fb='';
+  if(submitted){
+    fb='<div class="fb-correct"><div class="fb-title">\u2713 Correct!</div>'+q.exp+'</div>';
+  } else if(tried.length>0){
+    var last=tried[tried.length-1];
+    var msg=q.wrongs[last]||'That\'s not the right answer. Re-read the coaching tip and try again.';
+    fb='<div class="fb-wrong"><div class="fb-title">\u2717 Not quite.</div>'+msg+'</div>';
+  }
+
+  var canSubmit=(!submitted && sel!==null);
+  var actionBtn=!submitted
+    ?'<button class="btn-submit"'+(canSubmit?'':' disabled')+' onclick="doSubmit()">Check Answer</button>'
+    :'<button class="btn-next" onclick="goNext()">'+(cur<QS.length-1?'Next question \u2192':'See Results \u2192')+'</button>';
+
+  var backCls=cur===0?'btn-back btn-back-hidden':'btn-back';
+
+  var qCol='<div class="question-col">'+secLabel
+    +'<div class="question-card">'
+    +'<span class="skill-badge" style="background:'+q.sb+';color:'+q.sc+'">'+q.skill+'</span>'
+    +'<div class="q-num">Question '+(cur+1)+'</div>'
+    +'<div class="q-text">'+q.q+'</div>'
+    +'<div class="tip-box"><div class="tip-label">Coaching Tip</div><div class="tip-text">'+q.tip+'</div></div>'
+    +opts+fb
+    +'<div class="btn-row"><button class="'+backCls+'" onclick="goBack()">\u2190 Back</button>'+actionBtn+'</div>'
+    +'</div></div>';
+
+  document.getElementById('app').innerHTML='<div class="quiz-cols">'+buildPassageCol(q.pass)+qCol+'</div>';
+  // *** No scrollTo here — position preserved when answering ***
+}
+
+function renderResults(){
+  var p=pct(), r=80, c=2*Math.PI*r, d=(p/100)*c;
+  var G=skillGroups();
+  document.getElementById('prog-fill').style.width='100%';
+  document.getElementById('prog-label').textContent='Practice Complete';
+  document.getElementById('skill-label').textContent='';
+  var rows='';
+  Object.keys(G).forEach(function(sk){
+    var g=G[sk], ok=g.correct>=Math.ceil(g.total/2);
+    rows+='<div class="skill-row"><span class="skill-name">'+sk+'</span>'
+      +'<span class="'+(ok?'sk-pass':'sk-fail')+'">'+g.correct+'/'+g.total+' '+(ok?'\u2713':'\u2717')+'</span></div>';
+  });
+  document.getElementById('app').innerHTML='<div class="results-wrap">'
+    +'<div class="score-ring-wrap"><svg width="130" height="130" viewBox="0 0 180 180">'
+    +'<circle cx="90" cy="90" r="'+r+'" fill="none" stroke="#e0defa" stroke-width="16"/>'
+    +'<circle cx="90" cy="90" r="'+r+'" fill="none" stroke="#534AB7" stroke-width="16" stroke-dasharray="'+d.toFixed(1)+' '+c.toFixed(1)+'" stroke-linecap="round"/>'
+    +'</svg><div class="score-center"><div class="score-pct">'+p+'%</div><div class="score-lbl">First try</div></div></div>'
+    +'<h2 class="results-title">Practice Complete, Marcus!</h2>'
+    +'<p class="results-sub">You got '+QS.filter(function(_,i){return scores[i]===true;}).length+' of '+QS.length+' correct on the first try.</p>'
+    +'<div class="skill-table">'+rows+'</div>'
+    +'<button class="btn-restart" onclick="restart()">Practice Again</button>'
+    +'</div>';
+  window.scrollTo(0,0);
+}
+
+function pct(){return Math.round(QS.filter(function(_,i){return scores[i]===true;}).length/QS.length*100);}
+function skillGroups(){
+  var g={};
+  QS.forEach(function(q,i){
+    if(!g[q.skill])g[q.skill]={correct:0,total:0};
+    g[q.skill].total++;
+    if(scores[i]===true)g[q.skill].correct++;
+  });
+  return g;
+}
+
+function pick(i){
+  if(submitted)return;
+  if(triedPerQ[cur].indexOf(i)!==-1)return;
+  sel=i;
+  render();
+}
+function doSubmit(){
+  if(submitted||sel===null)return;
+  if(sel===QS[cur].ans){
+    submitted=true;
+    scores[cur]=(triedPerQ[cur].length===0);
+  } else {
+    triedPerQ[cur].push(sel);
+    if(scores[cur]===null)scores[cur]=false;
+    sel=null;
+  }
+  render();
+}
+function goNext(){
+  if(cur<QS.length-1){
+    cur++;sel=null;submitted=false;render();window.scrollTo(0,0);
+  } else {STATE='results';render();}
+}
+function goBack(){
+  if(cur===0)return;
+  cur--;sel=null;
+  submitted=(scores[cur]!==null);
+  if(submitted)sel=QS[cur].ans;
+  render();window.scrollTo(0,0);
+}
+function restart(){
+  cur=0;sel=null;submitted=false;STATE='quiz';
+  scores=QS.map(function(){return null;});
+  triedPerQ=QS.map(function(){return [];});
+  render();window.scrollTo(0,0);
+}
+
+render();
+</script>
+</body>
+</html>
